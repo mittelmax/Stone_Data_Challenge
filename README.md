@@ -4,7 +4,7 @@
 
 Gostaria de aproveitar esse espaço para me apresentar brevemente. Meu nome é Max e estou atualmente cursando o quinto semestre de economia no Insper. Me interesso muitíssimo pela área de ciência de dados e tenho intenção de buscar uma carreira nessa área. Por esse motivo busco ampliar meus conhecimentos na área através da participação em organizações estudantis, realizar estágios de férias na área e também participando de competições do Kaggle.
 
-Para encerrar gostaria de dizer que foi uma experiência muito prazerosa participar deste desafio. Encontrei diversos problemas que me fizeram sair de minha zona de conforto. Espero também que algumas das ideias que surgiram este projeto sejam interessantes para vocês :)
+Para encerrar gostaria de dizer que foi uma experiência muito prazerosa participar deste desafio. Encontrei diversos problemas que me fizeram sair de minha zona de conforto. Espero também que algumas das ideias que surgiram deste projeto sejam interessantes para vocês :)
 
 ## `Estrutura do Diretório`
 
