@@ -15,11 +15,11 @@ Aqui está um resumo da estrutura desse diretório. Aloquei todos arquivos da fo
     * __init__.py
     * config.py
   * `data`
-    * raw/
-    * clean/
-    * feat_eng/
-    * model/
-    * predictions/
+    * `raw/`
+    * `clean/`
+    * `feat_eng/`
+    * `model/`
+    * `predictions/`
   * `scripts`
     * 1_stone_data_cleaning.R
     * 2_ipea_data_cleaning.R
@@ -52,13 +52,13 @@ Essa pasta contem as configurações do projeto. Em essência é um pacote que c
 
 ## `data`
 * `data`
-  * raw/
-  * clean/
-  * feat_eng/
-  * model/
-    * parameters
-    * performance
-  * predictions/
+  * `raw/`
+  * `clean/`
+  * `feat_eng/`
+  * `model/`
+    * `parameters`
+    * `performance`
+  * `predictions/`
   
 Essa pasta contém todas as bases de dados utilizadas, dados sobre a performance do modelo e a previsão final para ser contabilizada para o desafio:
 
@@ -97,8 +97,8 @@ Antes de qualquer coisa quero frisar que os scripts estão enumerados na ordem e
   * 1_dataviz.R
   * 2_performance_vis.R
   * 3_markdown_cleaning.Rmd
-  * fonts/
-  * html/
+  * `fonts/`
+  * `html/`
 
 Essa pasta contém todos os scripts utilizados para a construção de gráficos e visualizações sobre as variáveis e performance do modelo. Além disso também está contido nessa pasta o arquivo final de visualização (em html) que foi construído através de um R Markdown.
 
