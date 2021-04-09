@@ -32,6 +32,7 @@ Aqui está um resumo da estrutura desse diretório. Aloquei todos arquivos da fo
     * 9_model_lightgbm_t5.py
     * 10_model_historic_mean.py
     * 11_performance.py
+    * 12_prediction_join.py
   * visualization
     * 1_dataviz.R
     * 2_performance_vis.R
