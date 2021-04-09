@@ -1,0 +1,181 @@
+---
+title: "Stone Data Challenge - Limpeza de Dados"
+author: "Por Max Mitteldorf"
+output: html_document
+---
+<body style="background-color:#F2F1CB;">
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+options(scipen = 999)
+```
+![](pics/stone_logo.png)
+
+
+## Introdução
+
+Nesse pequeno html buscarei fazer um resumo sobre o tratamento que conferi às bases de dados do desafio. Comentarei tanto sobre as bases de clientes e faturamento da Stone quanto das bases adicionais que julguei innteressante adicionar à análise.
+
+## Limpeza dos dados dos clientes da Stone
+
+O tratamento da base de dados cadastrais sobre os clientes foi meu primeiro passo. Não descreverei todas as modificações (que estão disponíveis no script "stone_data_cleaning.R"), mas buscarei tratar dos aspectos mais importantes.
+
+Meu primeiro passo foi utilizar importar todos os pacotes que utilizaria no processo:
+
+```{r}
+library(tidyverse)
+library(skimr)
+library(stringi)
+library(data.table)
+library(lubridate)
+```
+\
+Em seguida importei as bases de dados referentes aos clientes e faturamentos:
+```{r}
+### Importing dataframes
+df_cad = read_csv("Data/Raw/cadastrais.csv")
+df_data = read_csv("Data/Raw/tpv-mensais-treinamento.csv")
+```
+\
+Antes de prosseguir juntei as bases de dados de cadastro e de faturamento:
+```{r}
+#### Merging dataframes
+df_cad = distinct(df_cad)
+df_total = inner_join(df_cad, df_data, by="id")
+```
+\
+Em seguida podemos investigar os tipos das variáveis e também dar uma olhada nas primeiras linhas da base de dados:
+```{r}
+#### Merging dataframes
+options(dplyr.width = Inf)
+head(df_total, 2)
+```
+\
+O primeiro problema que podemos ver na base é a formatação errada das datas:
+```{r}
+#### Merging dataframes
+head(df_total$mes_referencia, 2)
+```
+Resolver tal problema não é difícil:
+```{r}
+df_total$mes_referencia = ymd(df_total$mes_referencia)
+df_total$StoneFirstTransactionDate = ymd(df_total$StoneFirstTransactionDate)
+head(df_total$mes_referencia, 2)
+```
+\
+O próximo grande problema está na coluna "Estado", que contém mais de 61 valores únicos:
+```{r}
+### Investigating why there are 61 unique values for "Estado"
+unique(df_total$Estado) # both fullnames and initials are appearing for each state
+```
+Para corrigir isso utilizarei um dataframe extra com siglas e nomes de estados e também manipularei o padrão das strings:
+```{r}
+df_siglas = read_csv("Data/Raw/sigla_estados.csv") # Dataframe w/ state icons
+
+## Fixing "Estado" variable
+df_siglas = mutate(df_siglas, NOME = paste0(toupper(NOME),"$")) %>% # Converting to lowercase
+  mutate(NOME = stri_trans_general(NOME,"Latin-ASCII"))# removing accents
+
+## Creating named list with replacements
+siglas = df_siglas$SIGLA
+names(siglas) = df_siglas$NOME
+
+df_total = mutate(df_total, Estado = toupper(Estado)) %>% # Converting to uppercase
+  mutate(Estado = stri_trans_general(Estado,"Latin-ASCII")) # removing accents
+
+## Replacing strings
+df_total$Estado = str_replace_all(df_total$Estado, siglas)
+unique(df_total$Estado)
+```
+\
+O próximo problema pode ser encontrado na coluna porte, que contém em cada célula uma string com um range numérico:
+```{r}
+## Changing porte datatype to number
+head(df_total$porte, 3)
+```
+Dessa forma podemos manipular a string para tornar o range numérico e calcular sua média:
+```{r}
+## Changing porte datatype to number
+df_total = mutate(df_total, porte=str_replace_all(porte, "2.5k", "2500"))
+df_total = mutate(df_total, porte=str_replace_all(porte, "k", "000"))
+df_total = mutate(df_total, porte=str_replace_all(porte, "\\+", ""))
+df_total = mutate(df_total, porte=str_replace_all(porte, "-", "+"))
+eval_parse = function (x) {eval(parse(text = x))}
+df_total$porte = sapply(df_total$porte, eval_parse)/2
+head(df_total$porte, 3)
+```
+\
+Para encerrar a parte de limpeza de dados vou descrever o maior problema que encontrei na base de dados. Durante minhas manipulações descobri que o identificador único de clientes possuía entradas repetidas para as mesmas datas. Isso ocorre porque alguns clientes tiverem algumas variáveis alteradas durante o tempo. Dessa forma haviam clientes com mais de uma Macro Classificação, mais de um segmento, mais de uma estimativa de TPV, dentre outros problemas:
+```{r, eval=T, echo=T}
+### The dataframe has different entries for the same id's 
+distinct_values = df_total %>% 
+  as_tibble() %>% 
+  group_by(id) %>% 
+  summarise(n_mcc = n_distinct(MCC), n_macro=n_distinct(MacroClassificacao),
+            n_segmento=n_distinct(segmento), n_subsegmento=n_distinct(sub_segmento),
+            n_persona=n_distinct(persona), n_porte=n_distinct(porte),
+            n_tpvestimate = n_distinct(TPVEstimate), n_documento=n_distinct(tipo_documento),
+            n_estado=n_distinct(Estado)) 
+```
+Vamos observar alguns ids com algumas dessas variáveis que se alteram:
+```{r, eval=T, echo=T}
+## These ids have different caracteristics
+ids_errados = distinct_values %>% 
+  filter(n_mcc>1 | n_macro>1 | n_segmento>1 | n_subsegmento>1 | n_persona>1 |
+           n_porte>1 | n_tpvestimate>1 | n_documento>1 | n_estado>1)
+head(ids_errados, 4)
+```
+\
+Agora podemos definir alguma estratégia para remover esses valores problemáticos. Meu critério de decisão será priorizar entradas com valor válida para estado, maior estimativa de TPV e maior porte. Julgo que esse critério selecionará as entradas mais recenntes para cada id.
+\
+Esse é o código que utilizei para resolver isso. Não comentarei ele em detalhes pois acredito ser algo um pouco cansativo:
+```{r, eval=F, echo=T}
+## Defining  a strategy to keep the most recent entries for each id
+linhas_certas = tibble()
+contador = 1
+for (id_problematico in ids_errados$id) 
+{
+  df_i = df_total %>% 
+    as_tibble() %>% x
+    filter(id==id_problematico) %>% 
+    arrange(Estado, desc(TPVEstimate), desc(porte)) ## Prioritizing entries with a valid state variable
+                                                    ## and with the highest TPV estimate and size
+  df_i = slice_head(df_i, n=n_distinct(df_i$mes_referencia))
+  
+  linhas_certas = bind_rows(linhas_certas, df_i)
+  print(contador)
+  contador = contador + 1
+}
+## Eliminating wrong id's from dataframe
+df_correct = df_total %>% 
+  as_tibble() %>% 
+  filter(!(id %in% ids_errados$id))
+df_correct = bind_rows(df_correct, linhas_certas) %>% 
+  arrange(id, mes_referencia)
+```
+O último passo é apenas eliminar os id's errados selecionados e salvar a base de dados:
+```{r, eval=F, echo=T}
+## Eliminating wrong id's from dataframe
+df_correct = df_total %>% 
+  as_tibble() %>% 
+  filter(!(id %in% ids_errados$id))
+df_correct = bind_rows(df_correct, linhas_certas) %>% 
+  arrange(id, mes_referencia)
+
+#### Saving cleaned dataframe
+write_csv(df_correct, "Data/Clean/stone_data_cleaned.csv")
+```
+
+## Dados adicionais do ipeadata
+Decidi trazer algumas variáveis (a nível de estado e de país) que acredito úteis para medir o nível de atividade econômica e de preços. São elas:
+
+* **Nível país:**
+  * Produção total de caixas de papelão no mês
+  * Variação da produção de caixas de papelão no mês
+  * IPCA mensal
+  * Taxa de câmbio mensal
+* **Nível estado:**
+  * Número de demissões no mês (dados do CAGED)
+  * Variação da produção de caixas de papelão 
+  * Índice do varejo no estado
+
+Todas essas variáveis estavam bem formatadas, motivo pelo qual decidi omitir o código que une tais variáveis com as váriaveis da Stone.
