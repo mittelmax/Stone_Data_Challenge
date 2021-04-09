@@ -10,17 +10,17 @@ Para encerrar gostaria de dizer que foi uma experiência muito prazerosa partici
 
 Aqui está um resumo da estrutura desse diretório. Aloquei todos arquivos da forma que me pareceu mais coerente.
 
-* stone_data_challenge
-  * stone_data_challenge
+* `stone_data_challenge`
+  * `stone_data_challenge`
     * __init__.py
     * config.py
-  * data
+  * `data`
     * raw/
     * clean/
     * feat_eng/
     * model/
     * predictions/
-  * scripts
+  * `scripts`
     * 1_stone_data_cleaning.R
     * 2_ipea_data_cleaning.R
     * 3_join_stone_ipea.R
@@ -33,7 +33,7 @@ Aqui está um resumo da estrutura desse diretório. Aloquei todos arquivos da fo
     * 10_model_historic_mean.py
     * 11_performance.py
     * 12_prediction_join.py
-  * visualization
+  * `visualization`
     * 1_dataviz.R
     * 2_performance_vis.R
     * 3_markdown_cleaning.Rmd
@@ -43,15 +43,15 @@ Aqui está um resumo da estrutura desse diretório. Aloquei todos arquivos da fo
 Agora vamos analisar cada uma das partes em ordem:
 
 ## `stone_data_challenge`
-* stone_data_challenge
-  * stone_data_challenge
+* `stone_data_challenge`
+  * `stone_data_challenge`
     * __init__.py
     * config.py
 
 Essa pasta contem as configurações do projeto. Em essência é um pacote que contem o path para a pasta "data". Esse pacote é chamado nos scripts de Python para utilizar o path mencionado.
 
 ## `data`
-* data
+* `data`
   * raw/
   * clean/
   * feat_eng/
@@ -69,7 +69,7 @@ Essa pasta contém todas as bases de dados utilizadas, dados sobre a performance
 * `predictions` - Contém as previsões finais para o desafio.
 
 ## `scripts`
-* scripts
+* `scripts`
   * 1_stone_data_cleaning.R
   * 2_ipea_data_cleaning.R
   * 3_join_stone_ipea.R
@@ -93,7 +93,7 @@ Antes de qualquer coisa quero frisar que os scripts estão enumerados na ordem e
 * `Script 12` - É o script que une todos as previsões finais do modelo.
 
 ## `visualization`
-* visualization
+* `visualization`
   * 1_dataviz.R
   * 2_performance_vis.R
   * 3_markdown_cleaning.Rmd
