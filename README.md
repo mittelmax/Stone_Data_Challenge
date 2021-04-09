@@ -102,5 +102,5 @@ Antes de qualquer coisa quero frisar que os scripts estão enumerados na ordem e
 
 Essa pasta contém todos os scripts utilizados para a construção de gráficos e visualizações sobre as variáveis e performance do modelo. Além disso também está contido nessa pasta o arquivo final de visualização (em html) que foi construído através de um R Markdown.
 
-### `Dúvidas sobre execução`
+## `Dúvidas sobre execução`
 Peço encarecidamente que me enviem qualquer dúvida em relação à execução do código para meu email `maxmitteldorf@gmail.com`
