@@ -37,8 +37,8 @@ Aqui está um resumo da estrutura desse diretório. Aloquei todos arquivos da fo
     * 1_dataviz.R
     * 2_performance_vis.R
     * 3_markdown_cleaning.Rmd
-    * fonts/
-    * html/
+    * `fonts/`
+    * `html/`
 
 Agora vamos analisar cada uma das partes em ordem:
 
