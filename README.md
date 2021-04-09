@@ -56,8 +56,8 @@ Essa pasta contem as configurações do projeto. Em essência é um pacote que c
   * `clean/`
   * `feat_eng/`
   * `model/`
-    * `parameters`
-    * `performance`
+    * `parameters/`
+    * `performance/`
   * `predictions/`
   
 Essa pasta contém todas as bases de dados utilizadas, dados sobre a performance do modelo e a previsão final para ser contabilizada para o desafio:
