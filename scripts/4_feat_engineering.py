@@ -10,9 +10,8 @@ df = pd.read_csv(f"{data_dir}/data/clean/spine_stone_ipea.csv")
 df = df.replace("nan", np.NaN)
 df = df.drop_duplicates()
 
-
-# # # Checking column types
-# df.dtypes
+# # Checking column types
+df.dtypes
 
 # # Fixing types
 df[["MCC", "MacroClassificacao", "StoneCreatedDate", "StoneFirstTransactionDate", "segmento",
@@ -42,6 +41,7 @@ df["MesReferencia"] = df["mes_referencia"].dt.month
 df.drop(["mes", "StoneFirstTransactionDate", "StoneCreatedDate"], axis="columns", inplace=True)
 
 # # Checking for missing data
+df.replace('nan', np.nan, inplace=True)
 percent_missing = df.isnull().sum() * 100 / len(df)
 missing_value_df = pd.DataFrame({"col_name": df.columns, "pct_missing": percent_missing})
 
