@@ -1,0 +1,281 @@
+---
+title: "Stone Data Challenge - Visualização de Dados"
+author: "Por Max Mitteldorf"
+output: html_document
+---
+<!-- <body style="background-color:#F2F1CB;"> -->
+```{r setup, include=FALSE}
+options(scipen = 999)
+require("knitr")
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+opts_knit$set(root.dir = "/Users/maxmitteldorf/Desktop/stone_data_envio")
+```
+
+## Análise Exploratória
+
+A partir de agora buscarei conduzir uma análise explorátória da base de dados unificada, com dados da Stone e do ipeadata. Nesta etapa focarei meus comentários na análise dos resultados e nos trechos de código mais importantes. Omitirei os códigos para os gráficos porque eles ocupariam um espaço muito grande.
+
+### `TPV Mensal`
+
+Primeiramente podemos carregar as bases e também a fonnte que decidi usar nos gráficos:
+```{r, eval=T, echo=F}
+library(tidyverse)
+library(showtext)
+### Importing dataframe and fonts
+df = read_csv("data/clean/spine_stone_ipea.csv")
+font_add(family = "Sharon", regular = "visualization/fonts/Sharon.ttf")
+showtext_auto()
+```
+Começarei pelo TPV Mensal, nossa variável explicativa, e portanto, a mais importante. Vamos observar sua distribuição:
+```{r, eval=T, echo=F}
+### Monthly TPV histogram
+ggplot(df, aes(x=TPV_mensal)) + 
+  geom_histogram(aes(y=..density..), colour="black", fill="white", bins=80)+
+  geom_density(alpha=.7, fill="#00a868") +
+  xlim(0, 100000) +
+  theme_bw() + ylab("Densidade")+
+  theme(axis.text.x = element_text(colour="black", size=8), axis.text.y = element_text(colour="black", size=8))+
+  theme(text=element_text(family="Sharon",size=12, color = "black"))+
+  theme(panel.grid.major = element_line(size=0, color="black"))+
+  theme(panel.grid.minor = element_line(size=0, color="black"))+
+  xlab("TPV Mensal") + ggtitle("Distribuição do TPV Mensal")
+```
+\
+É possível observar que a distribuição dos TPVs mensais possui um grande assimetria positiva, indicando que a maior parte das empresas e clientes stone concentram-se em faixas menores de faturamento.
+\
+\
+Vamos investigar mais um pouco a distribuição do TPV. Vamos ver como ela se distribui pelos estados. Vamos primeiro agrupar a base por estado e calcular a média do TPV de cada um:
+```{r, eval=T, echo=T}
+### Number of clients by state
+df %>% group_by(Estado) %>% 
+  summarise(TPV_mensal = mean(TPV_mensal)) %>% 
+  head(n=10)
+```
+Agora já podemos desenhar o gráfico de barras:
+```{r, eval=T, echo=F}
+## Agrupando
+df_est = df %>% group_by(Estado) %>% 
+  summarise(TPV_mensal = mean(TPV_mensal)) %>% 
+  drop_na() %>% 
+  arrange(TPV_mensal)
+
+## Ordem
+limits_est = df_est$Estado
+
+## Gráfico
+ggplot(df_est, mapping=aes(x=Estado, y=TPV_mensal, fill=TPV_mensal)) +
+  geom_col() +
+  theme_bw() +
+  ylab("Média do TPV") +
+  theme(legend.position = "none")+
+  theme(text=element_text(family="Sharon",size=12, color = "black"))+
+  ggtitle("Média do TPV Mensal por Estado da Federação")+
+    theme(axis.text.x = element_text(colour="black", size=8), axis.text.y = element_text(colour="black", size=10))+
+    theme(panel.grid.major = element_line(size=0, color="black"))+
+  theme(panel.grid.minor = element_line(size=0, color="black"))+
+  scale_x_discrete(limits = limits_est) + scale_fill_gradient(low = "#b7e4c7", high="#1b4332")
+```
+\
+Podemos ver que roraima é o estado com a maior média de TPV mensal. Isso pode parecer surpreendente a princípio, mas devemos nos atentar também à quantidade de clientes nesse estado para verificar se isso não é efeito de algum outlier. Do outro lado o estado com menor faturamento médio é o Acre. Apesar desses valores não esperados vemos uma tendência geral dos estados mais ricos terem uma média de faturamento maior.
+\
+\
+Agora para vamos investigar o número de clientes por estado para confirmar a suspeita sobre Roraima:
+```{r, echo=T, eval=T}
+### Number of clients by state
+states = df %>% 
+  as_tibble() %>% 
+  count(Estado) %>% 
+  drop_na() %>% 
+  rename("n_clientes"=n) %>%
+  arrange(n_clientes)
+
+head(states, n=5)
+```
+```{r, echo=F, eval=T}
+order_nst = states$Estado
+ggplot(states, mapping=aes(x=Estado, y=n_clientes, fill=n_clientes)) +
+  geom_col() +
+  theme_bw() +
+  ylab("Número de clientes") +
+  theme(legend.position = "none") +
+  scale_x_discrete(limits=order_nst)+
+  ggtitle("Clientes Stone por Estado")+
+      theme(axis.text.x = element_text(colour="black", size=8), axis.text.y = element_text(colour="black", size=9))+
+      theme(panel.grid.major = element_line(size=0, color="black"))+
+  theme(panel.grid.minor = element_line(size=0, color="black"))+
+  theme(text=element_text(family="Sharon",size=12, color = "black"))+
+  scale_fill_gradient(low = "#40916c", high="#1b4332")
+```
+\
+Podemos ver que nossa suspeita sobre Roraima se confirmou. Muito provavelmente existe algum outlier com faturamento muito alto em Roraima. Além disso vemos que Pão Paulo tem mais que o dobro de clientes que o segundo colocado (Rio de Janeiro). Vemos que a Stone tem uma presença maior na região Sudeste, seguida pela região Sul.
+\
+\
+Agora vamos investigar como varia a média do TPV para cada Macro Classificação se setores:
+\
+Antes de fazer o gráfico precisamos agrupar o dataframe por Macro Classificação: 
+```{r, eval=T, echo=T}
+## Agrupando
+df_est = df %>% group_by(MacroClassificacao) %>% 
+  summarise(TPV_mensal = mean(TPV_mensal)) %>% 
+  drop_na() %>% 
+  arrange(TPV_mensal)
+
+## Ordem
+limits_mac = df_est$MacroClassificacao
+```
+```{r, eval=T, echo=F}
+## Gráfico
+ggplot(df_est, mapping=aes(x=MacroClassificacao, y=TPV_mensal, fill=TPV_mensal)) +
+  geom_col() +
+  theme_bw() +
+  ylab("Média do TPV") +
+  xlab("Macro Classificação")+
+  theme(legend.position = "none")+
+  theme(text=element_text(family="Sharon",size=12, color = "black"))+
+  ggtitle("Média do TPV Mensal por Macro Classificação")+
+    theme(axis.text.x = element_text(colour="black", size=10), axis.text.y = element_text(colour="black", size=10))+
+    theme(panel.grid.major = element_line(size=0, color="black"))+
+  theme(panel.grid.minor = element_line(size=0, color="black"))+
+    scale_x_discrete(limits = limits_mac) + scale_fill_gradient(low = "#b7e4c7", high="#1b4332")+
+  coord_flip()
+```
+\
+Podemos ver que dentre as áreas de Macro Classificação, os postos de gasolina apresentam um faturameto muito superior em relação aos demais grupos.
+\
+\
+Vamos investigar um pouco mais a fundo a média do TPV entre diversos setores. Dessa vez vamos agrupar a base pela variável segmento:
+```{r, eval=T, echo=T}
+## Agrupando
+df_seg = df %>% group_by(segmento) %>% 
+  summarise(TPV_mensal = mean(TPV_mensal)) %>% 
+  drop_na() %>% 
+  arrange(TPV_mensal)
+
+## Ordem
+limits_seg = df_seg$segmento
+```
+```{r, eval=T, echo=F}
+## Gráfico
+ggplot(df_seg, mapping=aes(x=segmento, y=TPV_mensal, fill=TPV_mensal)) +
+  geom_col() +
+  theme_bw() +
+  ylab("Média do TPV") +
+  xlab("Segmento")+
+  theme(legend.position = "none")+
+  theme(text=element_text(family="Sharon",size=12, color = "black"))+
+  ggtitle("Média do TPV Mensal por Segmento")+
+    theme(axis.text.x = element_text(colour="black", size=10), axis.text.y = element_text(colour="black", size=9))+
+    theme(panel.grid.major = element_line(size=0, color="black"))+
+  theme(panel.grid.minor = element_line(size=0, color="black"))+
+  scale_x_discrete(limits = limits_seg) + scale_fill_gradient(low = "#b7e4c7", high="#1b4332")+
+  coord_flip()
+```
+\
+Podemos ver que os segmentos de logístiva e de postos de gasolia são os com maior média de faturamento. Serviços de beleza e companhias aparecem por último. Apesar disso o valor de companhias aéreas parece ser anormalmente baixo.
+
+### `Variáveis do ipeadata`
+
+Agora vamos analisar um pouco as variáveis do ipeadata. A melhro forma de começar é construindo um heatmap das correlações entre elas e o TPV mensal:
+
+```{r, eval=T, echo=F}
+library(reshape2)
+
+# Creating matrix
+df_heatmap = df %>% 
+  select(TPV_mensal, caixas_papelao, caixas_papelao_varpct, ipca_pct, cambio_dol, demissoes, ind_varejo) %>% 
+  drop_na()
+mat_heatmap = round(cor(df_heatmap), 2)
+melted_mat = melt(mat_heatmap)
+## Gráfico
+ggplot(data = melted_mat, aes(Var2, Var1, fill = value))+
+ geom_tile(color = "white")+
+ scale_fill_gradient2(low = "red", high = "#00a868", mid = "white", 
+   midpoint = 0, limit = c(-1,1), space = "Lab", 
+   name="Correlação") +
+  theme_bw()+ 
+ theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 12, hjust = 1, color="black"), axis.text.y = element_text(color = "black"),
+    axis.title=element_blank())+
+ coord_fixed()+
+    theme(text=element_text(family="Sharon",size=12, color = "black")) +
+  ggtitle("Matriz de Correlação")
+```
+\
+Observando-se a matriz vemos que as correlações entre as variáveis do ipeadata e o TPV mensal não são muito altas. Apesar disso vemos uma correlação ligeiramente positiva com o ipca e o índice de varejo, e uma correlação lugeiramente negativa com o dólar. Esses efeitos estão dentro do esperado uma vez que o nível de câmbio e a inflação tem um efeito direto no faturamento. Devemos nos manter atentos porque há diversos segmentos de clientes que podem ter diferentes interações com essas variáveis, que acabam mascaradas quando agregadas.
+\
+\
+Ainda quero ressaltar que será adicionado lag temporal e médias móveis a todas essas variáveis posteriormente. Uma vez que esperamos uma forte característica autoregressiva no modelo.
+\
+\
+Como acabei de comentar vamos ver o impacto dessas variáveis no TPV de forma mais detalhada.
+Primeiramente vamos começar vendo o impacto do nível do ipca de acordo com as Macro Classificações de clientes:
+```{r, echo=F, eval=T}
+tpv_medio = df %>% 
+  drop_na %>% 
+  group_by(mes_referencia, MacroClassificacao) %>% 
+  summarise(med_tpv=mean(TPV_mensal), caixas_papelao_varpct=mean(caixas_papelao_varpct),
+            caixas_papelao=mean(caixas_papelao), ipca = mean(ipca_pct), cambio_dol = mean(cambio_dol), demissoes=mean(demissoes), ind_varejo = mean(ind_varejo))
+
+ggplot(data = tpv_medio, mapping=aes(x=ipca, y=med_tpv)) +
+  geom_point() +
+  geom_smooth(method="lm", se=FALSE, fill="#00a868", color="#00a868") +
+  facet_wrap(~MacroClassificacao) +
+  theme_bw()+ ylab("TPV Médio") + xlab("IPCA")+
+  theme(text=element_text(family="Sharon",size=12, color = "black"))+
+  ggtitle("Relação entre TPV e IPCA por Macro Classificação")+
+      theme(axis.text.x = element_text(colour="black", size=10), axis.text.y = element_text(colour="black", size=10))
+```
+\
+Observando os gráficos podemos ver uma ligeira tendência positiva (embora pequena) entre inflação(IPCA) e o TPV. Além disso vemos que o faturamento de postos de gasolina é o mais sensível à inflação. Provavelmente por ser um setor monopolizado o ajustes dos preços ocorre mais rapidamente.
+\
+\
+Vamos agora construir o mesmo gráfico para a taxa de câmbio e ver se nossas expectativas estavam corretas:
+```{r, echo=F, eval=T}
+ggplot(data = tpv_medio, mapping=aes(x=cambio_dol, y=med_tpv)) +
+  geom_point() +
+  geom_smooth(method="lm", se=FALSE, fill="#00a868", color="#00a868") +
+  facet_wrap(~MacroClassificacao) +
+  theme_bw()+ ylab("TPV Médio") + xlab("USD em R$")+
+  theme(text=element_text(family="Sharon",size=12, color = "black"))+
+  ggtitle("Relação entre TPV e Dólar por Macro Classificação")+
+      theme(axis.text.x = element_text(colour="black", size=10), axis.text.y = element_text(colour="black", size=10))
+```
+\
+Estávamos corretos! É possível ver uma clara relação negativa entre o preço do dólar em reais e o TPV. O setor de postos tem seu faturamento muito prejudicado com um dólar mais apreciado. Por outro lado vemos que o setor de supermercados e farmácias tem um aumento em seu faturamento (provavelmente por serem setores essenciais). Varejo e entretenimento também são prejudicados pelo aumento do dólar.
+\
+\
+O que aprendemos com isso? Que analisar a correlação com todos os setores agrupados esconde o poder preditivo de muitas variáveis. Dessa forma nnosso "feeling econômico" de que tias variáveis eram importantes estava correto.
+\
+\
+Vamos observar agora a relação entre o TPV e o índice de nível do varejo. É de se esperar que tal relação seja mais forte para o macro setor de varejo. Vamos ver:
+\
+```{r, echo=F, eval=T}
+ggplot(data = tpv_medio, mapping=aes(x=ind_varejo, y=med_tpv)) +
+  geom_point() +
+  geom_smooth(method="lm", se=FALSE, fill="#00a868", color="#00a868") +
+  facet_wrap(~MacroClassificacao) +
+  theme_bw()+ ylab("TPV Médio") + xlab("Índice de Varejo")+
+  theme(text=element_text(family="Sharon",size=12, color = "black"))+
+  ggtitle("Relação entre TPV e Índ. de Varejo por Macro Classificação")+
+      theme(axis.text.x = element_text(colour="black", size=10), axis.text.y = element_text(colour="black", size=10))
+```
+\
+Mais uma vez vemos que nossa intuição econômica estava correta. O índice de varejo aparenta ser uma boa proxy para a performance econômica deste setor e outros, e certamete contribuirá com o poder preditivo do modelo.
+\
+\
+Por último vamos visualizar a relação entre o número de demissões contabilizado pelo CAGED e o TPV Mensal:
+```{r, echo=F, eval=T}
+ggplot(data = tpv_medio, mapping=aes(x=demissoes, y=med_tpv)) +
+  geom_point() +
+  geom_smooth(method="lm", se=FALSE, fill="#00a868", color="#00a868") +
+  facet_wrap(~MacroClassificacao) +
+  theme_bw()+ ylab("TPV Médio") + xlab("Demissões")+
+  theme(text=element_text(family="Sharon",size=12, color = "black"))+
+  ggtitle("Relação entre TPV e Demissões por Macro Classificação")+
+      theme(axis.text.x = element_text(colour="black", size=4), axis.text.y = element_text(colour="black", size=10))
+```
+\
+Nesse caso a relação não fica tão clara ou interpretável. Vemos que o faturamento de postos de gasolina claramente aumenta em meses com mais demissões, algo muito interessante.
+\
+\
+Para finalizar gostaria de dizer mais uma vez que todas as variáveis que trouxe do ipea podem ter uma importância especial para um grupo específico de clientes. Dessa forma é válido deixá-las no modelo. Não adicionei mais variáveis pois pretendo adicionar vários lags e médias móveis para todas as variáveis listadas. Dessa forma espero que o número de variáveis regressoras aumente de forma substancial na etapa de feature engineering.

@@ -5,7 +5,7 @@ library(grid)
 library(ggcharts)
 library(mdthemes)
 
-font_add(family = "Sharon", regular = "Sharon.ttf")
+font_add(family = "Sharon", regular = "fonts/Sharon.ttf")
 showtext_auto()
 ##########################################
 rm(list=ls())

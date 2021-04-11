@@ -3,10 +3,11 @@ title: "Stone Data Challenge - Limpeza de Dados"
 author: "Por Max Mitteldorf"
 output: html_document
 ---
-<body style="background-color:#F2F1CB;">
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 options(scipen = 999)
+require("knitr")
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+opts_knit$set(root.dir = "/Users/maxmitteldorf/Desktop/stone_data_envio")
 ```
 ![](pics/stone_logo.png)
 
@@ -32,8 +33,8 @@ library(lubridate)
 Em seguida importei as bases de dados referentes aos clientes e faturamentos:
 ```{r}
 ### Importing dataframes
-df_cad = read_csv("Data/Raw/cadastrais.csv")
-df_data = read_csv("Data/Raw/tpv-mensais-treinamento.csv")
+df_cad = read_csv("data/raw/cadastrais.csv")
+df_data = read_csv("data/raw/tpv-mensais-treinamento.csv")
 ```
 \
 Antes de prosseguir juntei as bases de dados de cadastro e de faturamento:
@@ -69,7 +70,7 @@ unique(df_total$Estado) # both fullnames and initials are appearing for each sta
 ```
 Para corrigir isso utilizarei um dataframe extra com siglas e nomes de estados e também manipularei o padrão das strings:
 ```{r}
-df_siglas = read_csv("Data/Raw/sigla_estados.csv") # Dataframe w/ state icons
+df_siglas = read_csv("data/raw/sigla_estados.csv") # Dataframe w/ state icons
 
 ## Fixing "Estado" variable
 df_siglas = mutate(df_siglas, NOME = paste0(toupper(NOME),"$")) %>% # Converting to lowercase
