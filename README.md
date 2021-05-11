@@ -62,7 +62,7 @@ Essa pasta contém as configurações do projeto. Em essência, é um pacote que
   
 Essa pasta contém todas as bases de dados utilizadas, dados sobre a performance do modelo, e a previsão final para ser contabilizada para o desafio:
 
-* `raw` - Contém todas as bases de dados necessárias para reproduzir meus resultados. Enviei o conteúde dessa pasta para vocês por email para que vocês consigam reproduzir meus resultados.
+* `raw` - Contém todas as bases de dados necessárias para reproduzir meus resultados. Enviei o conteúdo dessa pasta para vocês por email para que vocês consigam reproduzir meus resultados.
 * `clean` - Contém as bases de dados depois de serem limpas com os scripts em R.
 * `feat_eng` - Contém a base de dados depois do processo de feature engineering (é a base que foi utilizada pelo modelo final). 
 * `model` - Contém tanto a melhor seleção de parâmetros para os modelos, quanto as métricas de performance no test set.
